@@ -1,49 +1,44 @@
 package com.example.controller;
 
-import java.time.LocalDate;
+
 import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.example.exception.ResourceNotFoundException;
 import com.example.model.Feedback;
-import com.example.repository.ICustomerRepository;
-import com.example.repository.IFeedbackRepository;
+import com.example.service.FeedbackService;
 
 @RestController
 @RequestMapping("/feedback")
 public class FeedbackController {
 	@Autowired
-	IFeedbackRepository feedbackRepo;
-	@Autowired
-	ICustomerRepository customerRepo;
+	FeedbackService feedbackService;
 	
 	@PostMapping(value="/addfeedback/{customerId}")
-	public Feedback addfeedback(@PathVariable(value="customerId")int customerId,@Validated @RequestBody Feedback feedback) {
-		feedback.setSubmitDate(LocalDate.now());
-		return customerRepo.findById(customerId).map(customer ->{
-			feedback.setCustomer(customer);
-			return feedbackRepo.save(feedback);
-		}).orElse(null);
-		
+	public ResponseEntity<Feedback> addfeedback(@PathVariable(value="customerId")int customerId,@RequestBody Feedback feedback) throws ResourceNotFoundException {
+		return new ResponseEntity<>(feedbackService.addfeedback(customerId, feedback),HttpStatus.CREATED);
 	}
 	
 	@GetMapping("/viewfeedback/{feedbackId}")
-	public Feedback findByfeedbackId(@PathVariable(value="feedbackId")String id) {
-		return feedbackRepo.findById(id).orElseThrow();
+	public ResponseEntity<Feedback> findByfeedbackId(@PathVariable(value="feedbackId")String id) throws ResourceNotFoundException{
+		return new ResponseEntity<>(feedbackService.findByfeedbackId(id),HttpStatus.OK);
 	}
 	
 	@GetMapping("/viewfeedbacks/{customerId}")
-	public List<Feedback> findByCustomerId(@PathVariable(value="customerId")int id) {
-		return feedbackRepo.findByCustomerId(id);
+	public ResponseEntity<List<Feedback>> findByCustomerId(@PathVariable(value="customerId")int id) throws ResourceNotFoundException{
+		return new ResponseEntity<>(feedbackService.findByCustomerId(id),HttpStatus.OK);
 	}
 	@GetMapping("/")
-	public List<Feedback> viewAllFeedbacks(){
-		return feedbackRepo.findAll();
+	public ResponseEntity<List<Feedback>> viewAllFeedbacks(){
+		return new ResponseEntity<>(feedbackService.viewAllFeedbacks(),HttpStatus.OK);
 	}
 
 }
